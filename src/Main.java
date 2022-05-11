@@ -7,85 +7,88 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.HashMap;
 import java.util.Map;
-import java.nio.file.StandardWatchEventKinds;
+import static java.nio.file.StandardWatchEventKinds.*;
 
-public class Main {
+public class Main{
 
     private static WatchKey key;
-    private static Map<Path, WatchKey> keys = new HashMap<>();
+    private static WatchService watcher;
     
-    public static void main(String[] args) throws Exception  {
+    public static void main(String[] args){
 
-        Path dirDEV = Paths.get("DEV");
-        Path dirTEST = Paths.get("TEST");
-        Path dirHOME = Paths.get("HOME");
+        Map<String, Directory> directories = new HashMap<>();
+
+        directories.put("DEV", new Directory("DEV", Paths.get("./dev")));
+        directories.put("TEST", new Directory("TEST", Paths.get("./test")));
+        directories.put("HOME", new Directory("HOME", Paths.get("./home")));
 
         DirectoryManager directoryManager = new DirectoryManager();
-        directoryManager.createDirectory(dirDEV);
-        directoryManager.createDirectory(dirTEST);
-        directoryManager.createDirectory(dirHOME);
-
-        WatchService watcher = FileSystems.getDefault().newWatchService();
-
+        
+        directoryManager.createDirectory(directories.get("DEV"));
+        directoryManager.createDirectory(directories.get("TEST"));
+        directoryManager.createDirectory(directories.get("HOME"));
+        
         try {
-            key = dirHOME.register(watcher, new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_CREATE});
-            keys.put(dirHOME, key);
-                    
+            watcher = FileSystems.getDefault().newWatchService();
+            directories.get("HOME").getDirPath().register(watcher, new WatchEvent.Kind[]{ENTRY_CREATE});
+            System.out.println("------------------------------");
+            
         } catch (IOException e) {
-            System.out.println("Uruchomienie watchera nie powiodło się.");
-            e.printStackTrace();
+            System.out.println("Uruchomienie watchera nie powiodlo sie.");
+            return;
         }
 
         while(true) {
-
-            //WatchKey loopKey;
             
             try {
                 key = watcher.take();
-            } catch (InterruptedException exception) {
-                System.out.println("Wyjątek");
+            } catch (InterruptedException e){
+                System.out.println("Nie udało się odczytac klucza z watchera.");
                 return;
             }
 
-            for (WatchEvent event : key.pollEvents()) {
+            for (WatchEvent<?> event : key.pollEvents()) {
 
-                System.out.println(event.kind() + ": " +dirHOME.getFileName() + "/" + event.context().toString());
-                
-                Path sourcefile = Paths.get(dirHOME + "/" + event.context());
+                System.out.println(event.kind() + ": " + directories.get("HOME").getDirName() + "/" + event.context().toString());
+                Path sourcefile = Paths.get(directories.get("HOME").getDirName() + "/" + event.context());
                 
                 if (directoryManager.getFileExtension(sourcefile).equals(".jar")) {
                 
-                    Path destinationfile = Paths.get(dirDEV + "/" + event.context());
-                    directoryManager.moveFile(sourcefile, destinationfile);
+                    if(directoryManager.isFileTimeCreationEven(sourcefile)) {
+                        
+                        System.out.println("Godzina jest parzysta! -> DEV");
+                        System.out.println("------------------------------");
+                        Path destinationfile = Paths.get(directories.get("DEV").getDirName() + "/" + event.context());
+                        directoryManager.moveFile(sourcefile, destinationfile);
+                        //directoryManager.increaseFileCounter();
 
+                    } else {
+
+                        System.out.println("Godzina jest nieparzysta! -> TEST");
+                        System.out.println("------------------------------");
+                        Path destinationfile = Paths.get(directories.get("TEST").getDirName() + "/" + event.context());
+                        directoryManager.moveFile(sourcefile, destinationfile);
+                        //directoryManager.increaseFileCounter();
+                    }
+                    
                 } else if (directoryManager.getFileExtension(sourcefile).equals(".xml")) {
                     
-                    Path destinationfile = Paths.get(dirTEST + "/" + event.context());
+                    Path destinationfile = Paths.get(directories.get("DEV").getDirName() + "/" + event.context());
                     directoryManager.moveFile(sourcefile, destinationfile);
+                    System.out.println("Plik XML -> DEV");
+                    System.out.println("------------------------------");
+                    //directoryManager.increaseFileCounter();
                 }
             }
-
             key.reset();
         }
-
-        // directoryManager.deleteDirectory(dirDEV);
-        // directoryManager.deleteDirectory(dirTEST);
-        // directoryManager.deleteDirectory(dirHOME);
     }
 }
 
-// Zadanie - aplikacja do segregowania plików (1-2h)
-
-// Twoim zadaniem jest napisanie programu, który będzie umożliwiał segregowanie plików. Program powinien:
-// stworzyć strukturę katalogów
-// HOME
-// DEV
-// TEST
-
-// W momencie pojawienia się w katalogu HOME pliku w zależności od rozszerzenia przeniesie go do folderu wg następujących reguł
 // plik z rozszerzeniem .jar, którego godzina utworzenia jest parzysta przenosimy do folderu DEV
 // plik z rozszerzeniem .jar, którego godzina utworzenia jest nieparzysta przenosimy do folderu TEST
 // plik z rozszerzeniem .xml, przenosimy do folderu DEV
+
 // Dodatkowo w nowo stworzonym pliku /home/count.txt należy przechowywać liczbę przeniesionych plików (wszystkich i w podziale na
 // katalogi), plik powinien w każdym momencie działania programu przechowywać aktualną liczbę przetworzonych plików.
 

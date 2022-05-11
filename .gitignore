@@ -1,6 +1,9 @@
 # Compiled class file
 *.class
 target/
+home/
+test/
+dev/
 
 # Log file
 *.log
