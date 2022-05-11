@@ -13,13 +13,7 @@ public class Main {
 
     private static WatchKey key;
     private static Map<Path, WatchKey> keys = new HashMap<>();
-    private static int counter;
     
-    @SuppressWarnings("unchecked")
-    static <T> WatchEvent<T> cast(WatchEvent<?> event) {
-        return (WatchEvent<T>)event;
-    }
-
     public static void main(String[] args) throws Exception  {
 
         Path dirDEV = Paths.get("DEV");
@@ -34,58 +28,44 @@ public class Main {
         WatchService watcher = FileSystems.getDefault().newWatchService();
 
         try {
-        
             key = dirHOME.register(watcher, new WatchEvent.Kind[]{StandardWatchEventKinds.ENTRY_CREATE});
             keys.put(dirHOME, key);
                     
         } catch (IOException e) {
-        
             System.out.println("Uruchomienie watchera nie powiodło się.");
             e.printStackTrace();
         }
 
+        while(true) {
 
-        for(;;) {
-
-            WatchKey loopKey;
+            //WatchKey loopKey;
             
             try {
-                
-                loopKey = watcher.take();
-
+                key = watcher.take();
             } catch (InterruptedException exception) {
-                
+                System.out.println("Wyjątek");
                 return;
             }
 
+            for (WatchEvent event : key.pollEvents()) {
 
-            if (loopKey == keys.get(dirHOME)) {
-                System.out.println("Klucz sie zgadza!");
-                System.out.println(keys.get(dirHOME));
-                System.out.println(loopKey);
+                System.out.println(event.kind() + ": " +dirHOME.getFileName() + "/" + event.context().toString());
+                
+                Path sourcefile = Paths.get(dirHOME + "/" + event.context());
+                
+                if (directoryManager.getFileExtension(sourcefile).equals(".jar")) {
+                
+                    Path destinationfile = Paths.get(dirDEV + "/" + event.context());
+                    directoryManager.moveFile(sourcefile, destinationfile);
+
+                } else if (directoryManager.getFileExtension(sourcefile).equals(".xml")) {
+                    
+                    Path destinationfile = Paths.get(dirTEST + "/" + event.context());
+                    directoryManager.moveFile(sourcefile, destinationfile);
+                }
             }
 
-            Thread.sleep(2000);
-
-            System.out.println(loopKey.reset());
-            key.pollEvents();
-                
-
-
-            // for (WatchEvent<?> event: key.pollEvents()) {
-            //     WatchEvent.Kind kind = event.kind();
-
-            //     // Context for directory entry event is the file name of entry
-            //     WatchEvent<Path> ev = cast(event);
-            //     Path name = ev.context();
-            //     Path child = dirHOME.resolve(name);
-
-            //     // print out event
-
-            //     System.out.format("%s: %s\n", event.kind().name(), child);
-            // }   
-            
-            // key.reset();
+            key.reset();
         }
 
         // directoryManager.deleteDirectory(dirDEV);
