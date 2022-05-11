@@ -1,14 +1,18 @@
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.FileTime;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.Writer;
+import java.nio.file.*;
+import java.nio.file.attribute.*;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.Properties;
 
 public class DirectoryManager {
 
+    private static final String PROPERTIES_FILE = "./home/count.txt";
+    
     public boolean createDirectory(Directory directory) {
 
         try {
@@ -87,5 +91,25 @@ public class DirectoryManager {
 
     public static void increaseFileCounter() {
 
+    }
+
+    public void saveStatistics(Map<String, Directory> directories) {
+
+        Properties properties = new Properties();
+
+        properties.setProperty(directories.get("DEV").getDirName(), directories.get("DEV").getFilesCount().toString());
+        properties.setProperty(directories.get("HOME").getDirName(), directories.get("HOME").getFilesCount().toString());
+        properties.setProperty(directories.get("TEST").getDirName(), directories.get("TEST").getFilesCount().toString());
+        properties.setProperty("TOTAL_FILES", Directory.getTotalFilesCount().toString());
+        
+        try {
+        
+            properties.store(new FileOutputStream(PROPERTIES_FILE), null);
+                
+        } catch (IOException e) {
+            
+            System.out.println("Nie udalo sie zapisac statystyk do pliku 'count.txt'. Wychodze z programu!");
+            return;
+        }
     }
 }

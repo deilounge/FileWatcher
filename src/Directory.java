@@ -4,7 +4,8 @@ public class Directory {
     
     private String dirName;
     private Path dirPath;
-    private int filesCount;
+    private Integer filesCount = 0;
+    private static Integer totalFilesCount = 0;
     
     public Directory(String dirName, Path dirPath) {
         this.dirName = dirName;
@@ -27,11 +28,24 @@ public class Directory {
         this.dirPath = dirPath;
     }
 
-    public int getFilesCount() {
+    public void setFilesCount(Integer filesCount) {
+        this.filesCount = filesCount;
+    }
+
+    public Integer getFilesCount() {
         return filesCount;
     }
 
-    public void setFilesCount(int filesCount) {
-        this.filesCount = filesCount;
+    public static void setTotalFilesCount(Integer totalFilesCount) {
+        Directory.totalFilesCount = totalFilesCount;
+    }
+
+    public static Integer getTotalFilesCount() {
+        return totalFilesCount;
+    }
+
+    public void increaseFileCounter() {
+        totalFilesCount++;
+        filesCount++;
     }
 }

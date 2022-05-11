@@ -31,6 +31,7 @@ public class Main{
         try {
             watcher = FileSystems.getDefault().newWatchService();
             directories.get("HOME").getDirPath().register(watcher, new WatchEvent.Kind[]{ENTRY_CREATE});
+            directoryManager.saveStatistics(directories);
             System.out.println("------------------------------");
             
         } catch (IOException e) {
@@ -60,7 +61,8 @@ public class Main{
                         System.out.println("------------------------------");
                         Path destinationfile = Paths.get(directories.get("DEV").getDirName() + "/" + event.context());
                         directoryManager.moveFile(sourcefile, destinationfile);
-                        //directoryManager.increaseFileCounter();
+                        directories.get("DEV").increaseFileCounter();
+                        directoryManager.saveStatistics(directories);
 
                     } else {
 
@@ -68,7 +70,8 @@ public class Main{
                         System.out.println("------------------------------");
                         Path destinationfile = Paths.get(directories.get("TEST").getDirName() + "/" + event.context());
                         directoryManager.moveFile(sourcefile, destinationfile);
-                        //directoryManager.increaseFileCounter();
+                        directories.get("TEST").increaseFileCounter();
+                        directoryManager.saveStatistics(directories);
                     }
                     
                 } else if (directoryManager.getFileExtension(sourcefile).equals(".xml")) {
@@ -77,28 +80,11 @@ public class Main{
                     directoryManager.moveFile(sourcefile, destinationfile);
                     System.out.println("Plik XML -> DEV");
                     System.out.println("------------------------------");
-                    //directoryManager.increaseFileCounter();
+                    directories.get("DEV").increaseFileCounter();
+                    directoryManager.saveStatistics(directories);
                 }
             }
             key.reset();
         }
     }
 }
-
-// plik z rozszerzeniem .jar, którego godzina utworzenia jest parzysta przenosimy do folderu DEV
-// plik z rozszerzeniem .jar, którego godzina utworzenia jest nieparzysta przenosimy do folderu TEST
-// plik z rozszerzeniem .xml, przenosimy do folderu DEV
-
-// Dodatkowo w nowo stworzonym pliku /home/count.txt należy przechowywać liczbę przeniesionych plików (wszystkich i w podziale na
-// katalogi), plik powinien w każdym momencie działania programu przechowywać aktualną liczbę przetworzonych plików.
-
-// Wymagania techniczne
-// Można użyć dowolnych bibliotek i frameworków na licencjach otwartych (np. MIT, Apache, itp.).
-// Projekt powinien być budowany i uruchamiany przez wybrany system do budowania (np. maven, gradle, itp..).
-// Do projektu powinna być dołączona instrukcja budowania i uruchamiania
-
-// Rozwiązanie
-// Przesłane rozwiązanie powinno zawierać:
-// repozytorium kodu z rozwiązaniem (jako archiwum .zip)
-// dostarczone materiały, oprócz przesłanego kodu źródłowego powinny zawierać również informację jak skompilować / zbudować
-// dostarczone źródła i sposób uruchomienia kodu 
