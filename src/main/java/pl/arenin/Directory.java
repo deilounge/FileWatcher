@@ -1,3 +1,5 @@
+package pl.arenin;
+
 import java.nio.file.Path;
 
 public class Directory {
